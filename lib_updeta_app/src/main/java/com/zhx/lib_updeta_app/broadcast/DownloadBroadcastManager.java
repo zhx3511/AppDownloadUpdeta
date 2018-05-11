@@ -79,7 +79,8 @@ public class DownloadBroadcastManager extends BroadcastReceiver {
                 NotificationUtils.getNotificationManager(mContext).notify(0, NotificationUtils.getNotificationBuilder(mContext).build());// 把通知发布出去
             }
         }
-
+        //关闭回收广播，静态类变量
+        UpdateApp.clear();
     }
 
 

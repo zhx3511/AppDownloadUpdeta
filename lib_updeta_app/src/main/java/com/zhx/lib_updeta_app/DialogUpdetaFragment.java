@@ -8,8 +8,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.zhx.lib_updeta_app.base.BaseDialogFragment;
 import com.zhx.lib_updeta_app.config.UpdateApp;
 import com.zhx.lib_updeta_app.utils.CommitUtils;
 
@@ -18,15 +20,13 @@ import com.zhx.lib_updeta_app.utils.CommitUtils;
  * Created by zhx on 2018/5/8.
  */
 
-public class DialogUpdetaFragment extends DialogFragment implements View.OnClickListener {
+public class DialogUpdetaFragment extends BaseDialogFragment implements View.OnClickListener {
 
-    private static UpdateApp.VersionInfo mVersionInfo;
 
-    public static DialogUpdetaFragment newInstance(UpdateApp.VersionInfo mVersionInfo) {
+
+    public static DialogUpdetaFragment newInstance(UpdateApp.VersionInfo mVersionInfos) {
+        mVersionInfo = mVersionInfos;
         DialogUpdetaFragment instance = new DialogUpdetaFragment();
-        Bundle args = new Bundle();
-        args.putSerializable("mVersionInfo", mVersionInfo);
-        instance.setArguments(args);
         return instance;
     }
 
@@ -53,16 +53,25 @@ public class DialogUpdetaFragment extends DialogFragment implements View.OnClick
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mVersionInfo = (UpdateApp.VersionInfo) getArguments().getSerializable("mVersionInfo");
+//        mVersionInfo = (UpdateApp.VersionInfo) getArguments().getSerializable("mVersionInfo");
 
         ((TextView) view.findViewById(R.id.download_dialog_titile)).setText(mVersionInfo.download_dialog_titile == null ? "检测到有新版本" : mVersionInfo.download_dialog_titile);
         ((TextView) view.findViewById(R.id.download_dialog_content)).setText(mVersionInfo.download_dialog_content == null ? "" : mVersionInfo.download_dialog_content);
         ((TextView) view.findViewById(R.id.download_dialog_but_no)).setText(mVersionInfo.download_dialog_but_no == null ? "暂时不更新" : mVersionInfo.download_dialog_but_no);
         ((TextView) view.findViewById(R.id.download_dialog_but_ok)).setText(mVersionInfo.download_dialog_but_ok == null ? "立即更新" : mVersionInfo.download_dialog_but_ok);
         ((TextView) view.findViewById(R.id.download_dialog_but_ok)).setOnClickListener(this);
-        ((TextView) view.findViewById(R.id.download_dialog_but_no)).setOnClickListener(this);
+        if (!mVersionInfo.isForceUpdeta) {
+            ((TextView) view.findViewById(R.id.download_dialog_but_no)).setOnClickListener(this);
+            ((TextView) view.findViewById(R.id.download_dialog_but_no)).setVisibility(View.VISIBLE);
 
+        } else {
+            ((TextView) view.findViewById(R.id.download_dialog_but_no)).setVisibility(View.GONE);
+        }
 
+        if (mVersionInfo.view != null) {//弹出布局有外面定义传递进来
+            ((LinearLayout) view.findViewById(R.id.layout_view)).removeAllViews();
+            ((LinearLayout) view.findViewById(R.id.layout_view)).addView(mVersionInfo.view);
+        }
     }
 
     @Nullable
@@ -81,5 +90,11 @@ public class DialogUpdetaFragment extends DialogFragment implements View.OnClick
             this.dismiss();
             UpdateApp.startUpdata(mVersionInfo);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mVersionInfo = null;
     }
 }

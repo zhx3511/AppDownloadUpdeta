@@ -2,10 +2,13 @@ package com.zhx.lib_updeta_app.config;
 
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.icu.util.VersionInfo;
 import android.support.v4.content.LocalBroadcastManager;
+import android.view.View;
 
 import com.zhx.lib_updeta_app.DialogUpdetaFragment;
 import com.zhx.lib_updeta_app.broadcast.DownloadBroadcastManager;
@@ -36,11 +39,13 @@ public class UpdateApp {
      */
     public static final int DOWNLOADSERVICE_STATUS_NO = 2;
 
-    private LocalBroadcastManager localBroadcastManager;
-    private DownloadBroadcastManager mDownloadBroadcastManager;
+    private static LocalBroadcastManager localBroadcastManager;
+    private static DownloadBroadcastManager mDownloadBroadcastManager;
 
+    public static VersionInfo versionInfo;
 
     public UpdateApp(VersionInfo versionInfo) {
+        this.versionInfo = versionInfo;
         int status =
                 CommitUtils.VersionComparison(versionInfo.newVersion, versionInfo.newVersion, CommitUtils.getVersionName(activity));
         if (status > 0) { //需要更新
@@ -56,15 +61,28 @@ public class UpdateApp {
     }
 
 
+    /**
+     * 通过 setDialogView  之定义View 时
+     * 启动下载服务使用该方法获取VersionInfo对象
+     *
+     * @return
+     */
+    public static VersionInfo getVersionInfo() {
+        return versionInfo;
+    }
+
+
     public static class VersionInfo implements Serializable {
         public String newVersion; // 最新版本
         public String url; // 下载地址
         public String remark;//更新内容
         public boolean isForceUpdeta = false;
+        public View view;
         public String download_dialog_content;
         public String download_dialog_titile;
         public String download_dialog_but_no;
         public String download_dialog_but_ok;
+        public DialogFragment mDialogFragment;
 
         public VersionInfo(Activity activitys) {
             activity = activitys;
@@ -159,6 +177,28 @@ public class UpdateApp {
             return this;
         }
 
+        /**
+         * 设置更新对话框布局
+         *
+         * @param view
+         * @return
+         */
+        public VersionInfo setDialogView(View view) {
+            this.view = view;
+            return this;
+        }
+
+        /**
+         * 设置之定义的对话框 ，更新需调用  {@link #startUpdata(VersionInfo)}
+         *
+         * @param mDialogFragment
+         * @return
+         */
+        public VersionInfo setDialogFragment(DialogFragment mDialogFragment) {
+            this.mDialogFragment = mDialogFragment;
+            return this;
+        }
+
         public UpdateApp build() {
             if (this.url.equals(""))
                 throw new IllegalArgumentException("versionInfo.url == ''");
@@ -179,10 +219,14 @@ public class UpdateApp {
     }
 
 
-    public void clear() {
+    /**
+     * 回收
+     */
+    public static void clear() {
         activity = null;
         //取消注册广播,防止内存泄漏
         localBroadcastManager.unregisterReceiver(mDownloadBroadcastManager);
+        versionInfo = null;
     }
 
 }
